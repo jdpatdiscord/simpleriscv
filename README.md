@@ -2,14 +2,16 @@
 A simple RISC-V implementation that aims to be source-as-documentation for the architecture and its extensions
 
 # Building & testing 
-`git clone https://github.com/jdpatdiscord/simpleriscv`
-`cd simpleriscv/`
-`cmake -S . -B build`
-`cmake --build build`
-`cd tests/`
-`cmake -S . -B build`
-`cmake --build build`
-`./build/TestRunner.exe` / `./build/TestRunner`
+```
+git clone https://github.com/jdpatdiscord/simpleriscv
+cd simpleriscv/
+cmake -S . -B build
+cmake --build build
+cd tests/
+cmake -S . -B build
+cmake --build build
+./build/TestRunner.exe
+```
 
 # Contributor guidelines
 * Any pull request opened must leave the master branch in a compiling & working state. 
