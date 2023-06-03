@@ -128,6 +128,9 @@ struct RISCVInstruction
     }
 };
 
+static_assert(RISCVInstruction{0x00178793}.family() == 0x3);
+static_assert(RISCVInstruction{0x00178793}.opcode() == 0x04);
+
 static_assert(sizeof(RV32I_TypeR) == 4, "sizeof(RV32I_TypeR) != 4 (must add up to 32 bits)");
 static_assert(sizeof(RV32I_TypeI) == 4, "sizeof(RV32I_TypeI) != 4 (must add up to 32 bits)");
 static_assert(sizeof(RV32I_TypeS) == 4, "sizeof(RV32I_TypeS) != 4 (must add up to 32 bits)");
