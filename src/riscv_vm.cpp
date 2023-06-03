@@ -351,7 +351,7 @@ struct RISCVContainer
 
 	RISCVContainer() = delete;
 	RISCVContainer(const uint32_t* instructions, size_t array_size)
-	  : instruction_block(std::views::counted(instructions, array_size / 4))
+	  : instruction_block(std::views::counted(instructions, (s64)(array_size / 4)))
 	//   , stack_region{nullptr}
 	  , pc{instruction_block.data()} {}
 
@@ -515,7 +515,7 @@ const uint32_t rv32_bin[] = {
 	0x00008067,	//	.L1:ret						// }
 };
 
-int main(int argc, char* argv[])
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
 	RISCVContainer runner(rv32_bin, sizeof(rv32_bin));
 	runner.Run();

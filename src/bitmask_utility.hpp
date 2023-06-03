@@ -5,7 +5,7 @@
 #include <concepts>
 
 template<std::unsigned_integral T>
-constexpr T make_bitmask(uInt start, uInt end)
+constexpr T make_bitmask(uInt start, uInt end) noexcept
 {
     auto high = start > end ? start : end;
     auto low  = end < start ? end : start;
@@ -24,7 +24,7 @@ constexpr T make_bitmask(uInt start, uInt end)
 }
 
 template<std::integral auto Start, std::integral auto End, std::unsigned_integral T>
-constexpr auto extract_bits(T v)
+constexpr T extract_bits(T v) noexcept
 {
 	SRISCV_CX_STATIC constexpr T mask = make_bitmask<T>(Start, End);
 	return (v & mask) >> Start;
