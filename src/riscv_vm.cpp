@@ -15,6 +15,8 @@
 
 using std::bit_cast;
 
+namespace stdr = std::ranges;
+
 struct RV32I_TypeR
 {
 	unsigned opcode : 7;
@@ -110,7 +112,9 @@ struct RV32I_TypeJ
 	};
 };
 
-struct RISCVInstruction
+static constexpr size_t instruction_alignment = 4;
+
+struct alignas(instruction_alignment) RISCVInstruction
 {
 	u32 _v;
 	// unsigned family : 2;
@@ -126,7 +130,7 @@ struct RISCVInstruction
 	}
 
 	constexpr u32 value() const noexcept {
-		return extract_bits<8, 31>(_v);
+		return extract_bits<7, 31>(_v);
 	}
 
     constexpr operator u32() const noexcept {
@@ -210,20 +214,24 @@ struct RISCVContainer
 		{
 			if (!m_data)
 				RVCore_CriticalError("Failed to allocate instruction block");
+			memset(m_data.get(), '\000', size);
 		}
 	public:
-		template<std::ranges::range R>
-		constexpr InstructionBlock(R instructions)
-		  : InstructionBlock{std::ranges::size(instructions)}
+		// accepts any range, even ones with non contiguous memory (a linked list for example (dont do that though))
+		template<stdr::range R>
+		constexpr InstructionBlock(R&& instructions)
+		  : InstructionBlock{stdr::size(instructions)}
 		{
-			std::ranges::copy(instructions, m_data.get());
+			stdr::copy(instructions, m_data.get());
 		}
 
-		template<std::ranges::contiguous_range R>
-		constexpr InstructionBlock(R instructions)
-		  : InstructionBlock{std::ranges::size(instructions)}
+		// uses memcpy when the passed in data is contiguous,
+		// (the copy algorithm should also do this, but this is the classic way)
+		template<stdr::contiguous_range R>
+		constexpr InstructionBlock(R&& instructions)
+		  : InstructionBlock{stdr::size(instructions)}
 		{
-			std::memcpy(m_data.get(), std::ranges::data(instructions), std::ranges::size(instructions));
+			std::memcpy(m_data.get(), stdr::data(instructions), stdr::size(instructions) * sizeof(stdr::range_value_t<R>));
 		}
 
 		constexpr RISCVInstruction const* data() const noexcept {
@@ -234,12 +242,11 @@ struct RISCVContainer
 		}
 	};
 
-	
 	InstructionBlock instruction_block;
 	// uint8_t* stack_region;
 	RISCVInstruction const* pc;
 
-	const bool AddressWithinBounds(const void* address)
+	bool AddressWithinBounds(const void* address)
 	{
 		return address >= instruction_block.data() &&
 			address < instruction_block.data() + instruction_block.size();
@@ -247,27 +254,15 @@ struct RISCVContainer
 
 	RISCVContainer() = delete;
 	RISCVContainer(const uint32_t* instructions, size_t array_size)
-	  : instruction_block(std::views::counted(instructions, array_size))
+	  : instruction_block(std::views::counted(instructions, array_size / 4))
 	//   , stack_region{nullptr}
 	  , pc{instruction_block.data()} {}
 
-	template<std::ranges::range R>
+	template<stdr::range R>
 	RISCVContainer(R&& instruction_range)
 	  : instruction_block(std::forward<R>(instruction_range))
 	//   , stack_region{nullptr}
 	  , pc{instruction_block.data()} {}
-
-	// ~RISCVContainer()
-	// {
-	// 	if (stack_region)
-	// 		_aligned_free(stack_region/*, 16, stack_region_size*/);
-	// 	if (instruction_block)
-	// 		_aligned_free(instruction_block/*, 4, instruction_block_size*/);
-	// 	stack_region = NULL;
-	// 	instruction_block = NULL;
-	// 	stack_region_size = 0;
-	// 	instruction_block_size = 0;
-	// }
 
 	int PerformCycle()
 	{
@@ -424,7 +419,7 @@ const uint32_t rv32_bin[] = {
 
 int main(int argc, char* argv[])
 {
-	RISCVContainer runner(rv32_bin);
+	RISCVContainer runner(rv32_bin, sizeof(rv32_bin));
 	runner.Run();
 	return 0;
 }
