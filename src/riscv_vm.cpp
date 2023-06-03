@@ -19,43 +19,113 @@ namespace stdr = std::ranges;
 
 struct RV32I_TypeR
 {
-	unsigned opcode : 7;
-	unsigned rd : 5;
-	unsigned funct3 : 3;
-	unsigned rs1 : 5;
-	unsigned rs2 : 5;
-	unsigned funct7 : 7;
+	u32 m_value;
+
+	constexpr auto opcode() const noexcept {
+		return extract_bits<0, 6>(m_value);
+	}
+	constexpr auto rd() const noexcept {
+		return extract_bits<7, 11>(m_value);
+	}
+	constexpr auto funct3() const noexcept {
+		return extract_bits<12, 14>(m_value);
+	}
+	constexpr auto rs1() const noexcept {
+		return extract_bits<15, 19>(m_value);
+	}
+	constexpr auto rs2() const noexcept {
+		return extract_bits<20, 24>(m_value);
+	}
+	constexpr auto funct7() const noexcept {
+		return extract_bits<25, 31>(m_value);
+	}
+
+    constexpr operator u32() const noexcept {
+        return m_value;
+    }
 };
 
 struct RV32I_TypeI
 {
-	unsigned opcode : 7;
-	unsigned rd : 5;
-	unsigned funct3 : 3;
-	unsigned rs1 : 5;
-	signed imm12 : 12;
+	u32 m_value;
+
+	constexpr auto opcode() const noexcept {
+		return extract_bits<0, 6>(m_value);
+	}
+	constexpr auto rd() const noexcept {
+		return extract_bits<7, 11>(m_value);
+	}
+	constexpr auto funct3() const noexcept {
+		return extract_bits<12, 14>(m_value);
+	}
+	constexpr auto rs1() const noexcept {
+		return extract_bits<15, 19>(m_value);
+	}
+	constexpr auto imm12() const noexcept {
+		return extract_bits<20, 31>(m_value);
+	}
+
+    constexpr operator u32() const noexcept {
+        return m_value;
+    }
 };
 
 struct RV32I_TypeS
 {
-	unsigned opcode : 7;
-	unsigned imm5 : 5;
-	unsigned funct3 : 3;
-	unsigned rs1 : 5;
-	unsigned rs2 : 5;
-	unsigned imm7 : 7;
+	u32 m_value;
+
+	constexpr auto opcode() const noexcept {
+		return extract_bits<0, 6>(m_value);
+	}
+	constexpr auto rd() const noexcept {
+		return extract_bits<7, 11>(m_value);
+	}
+	constexpr auto funct3() const noexcept {
+		return extract_bits<12, 14>(m_value);
+	}
+	constexpr auto rs1() const noexcept {
+		return extract_bits<15, 19>(m_value);
+	}
+	constexpr auto rs2() const noexcept {
+		return extract_bits<20, 24>(m_value);
+	}
+	constexpr auto imm7() const noexcept {
+		return extract_bits<25, 31>(m_value);
+	}
+
+    constexpr operator u32() const noexcept {
+        return m_value;
+    }
 };
 
 struct RV32I_TypeB
 {
-	unsigned opcode : 7;
-	unsigned imm1_1 : 1;
-	unsigned imm4 : 4;
-	unsigned funct3 : 3;
-	unsigned rs1 : 5;
-	unsigned rs2 : 5;
-	unsigned imm6 : 6;
-	unsigned imm1_2 : 1;
+	u32 m_value;
+
+	constexpr auto opcode() const noexcept {
+		return extract_bits<0, 6>(m_value);
+	}
+	constexpr auto imm1_1() const noexcept {
+		return extract_bits<7, 7>(m_value);
+	}
+	constexpr auto imm4() const noexcept {
+		return extract_bits<8, 11>(m_value);
+	}
+	constexpr auto funct3() const noexcept {
+		return extract_bits<12, 14>(m_value);
+	}
+	constexpr auto rs1() const noexcept {
+		return extract_bits<15, 19>(m_value);
+	}
+	constexpr auto rs2() const noexcept {
+		return extract_bits<20, 24>(m_value);
+	}
+	constexpr auto imm6() const noexcept {
+		return extract_bits<25, 30>(m_value);
+	}
+	constexpr auto imm1_2() const noexcept {
+		return extract_bits<31, 31>(m_value);
+	}
 
 	signed offset()
 	{
@@ -75,26 +145,56 @@ struct RV32I_TypeB
 		fin |= (signed)(value() & mask4) >> 19;
 		return (signed)fin / 4 - 1;
 	}
+
+    constexpr operator u32() const noexcept {
+        return m_value;
+    }
 };
 
 struct RV32I_TypeU
 {
 	static constexpr uint32_t MaskImm = 0b1111111111111111111100000000000;
 
-	unsigned opcode : 7;
-	unsigned rd: 5;
-	signed imm20 : 20;
+	u32 m_value;
+
+	constexpr auto opcode() const noexcept {
+		return extract_bits<0, 6>(m_value);
+	}
+	constexpr auto rd() const noexcept {
+		return extract_bits<7, 11>(m_value);
+	}
+	constexpr auto imm20() const noexcept {
+		return extract_bits<12, 31>(m_value);
+	}
+
+    constexpr operator u32() const noexcept {
+        return m_value;
+    }
 };
 
 
 struct RV32I_TypeJ
 {
-	unsigned opcode : 7;
-	unsigned rd : 5;
-	unsigned imm8 : 8;
-	unsigned imm1_1 : 1;
-	unsigned imm10 : 10;
-	unsigned imm1_2 : 1;
+	u32 m_value;
+
+	constexpr auto opcode() const noexcept {
+		return extract_bits<0, 6>(m_value);
+	}
+	constexpr auto rd() const noexcept {
+		return extract_bits<7, 11>(m_value);
+	}
+	constexpr auto imm8() const noexcept {
+		return extract_bits<12, 19>(m_value);
+	}
+	constexpr auto imm1_1() const noexcept {
+		return extract_bits<20, 21>(m_value);
+	}
+	constexpr auto imm10() const noexcept {
+		return extract_bits<22, 30>(m_value);
+	}
+	constexpr auto imm1_2() const noexcept {
+		return extract_bits<31, 31>(m_value);
+	}
 
 	signed offset()
 	{
@@ -103,38 +203,35 @@ struct RV32I_TypeJ
 	  	static constexpr uint32_t MaskLowerInteger = 0b01111111111000000000000000000000;
 	  	static constexpr uint32_t MaskSignBit      = 0b10000000000000000000000000000000;
 		unsigned off = 0;
-		auto value = [this]{return bit_cast<u32>(*this);};
-		off |= (value() & MaskUpperInteger) << 11;
-		off |= (value() & MaskMiddleBit) << 2;
-		off |= (value() & MaskLowerInteger) >> 9;
-		off |= (value() & MaskSignBit);
+		off |= (m_value & MaskUpperInteger) << 11;
+		off |= (m_value & MaskMiddleBit) << 2;
+		off |= (m_value & MaskLowerInteger) >> 9;
+		off |= (m_value & MaskSignBit);
 		return (signed)off >> 12;
 	};
+
+    constexpr operator u32() const noexcept {
+        return m_value;
+    }
 };
 
 static constexpr size_t instruction_alignment = 4;
 
 struct alignas(instruction_alignment) RISCVInstruction
 {
-	u32 _v;
-	// unsigned family : 2;
-	// unsigned opcode : 5;
-	// unsigned value : 25;
+	u32 m_value;
 
 	constexpr u32 family() const noexcept {
-		return extract_bits<0, 1>(_v);
+		return extract_bits<0, 1>(m_value);
 	}
-
 	constexpr u32 opcode() const noexcept {
-		return extract_bits<2, 6>(_v);
+		return extract_bits<2, 6>(m_value);
 	}
-
 	constexpr u32 value() const noexcept {
-		return extract_bits<7, 31>(_v);
+		return extract_bits<7, 31>(m_value);
 	}
-
     constexpr operator u32() const noexcept {
-        return _v;
+        return m_value;
     }
 };
 
@@ -280,32 +377,42 @@ struct RISCVContainer
 
 		if (i.family() == 0x3 && i.opcode() == 0x00)
 		{
+<<<<<<< Updated upstream
 			if (as_i(i).funct3 == 0) 
 				;
+||||||| Stash base
+			if (as_i(i).funct3 == 0) {
+
+			}
+=======
+			if (as_i(i).funct3() == 0) {
+
+			}
+>>>>>>> Stashed changes
 
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x04)
 		{
-			if (as_i(i).rd == 0)
+			if (as_i(i).rd() == 0)
 				return 0;
-			if (as_i(i).funct3 == 0) // addi (add signed immediate)
-				xregs[as_i(i).rd] = xregs[as_i(i).rs1] + as_i(i).imm12;
-			else if (as_i(i).funct3 == 1 && as_s(i).imm7 == 0) // slli
-				xregs[as_r(i).rd] = xregs[as_r(i).rs1] << as_r(i).rs2;
-			else if (as_i(i).funct3 == 2) // slti
-				xregs[as_i(i).rd] = (signed)xregs[as_i(i).rs1] < (signed)as_i(i).imm12;
-			else if (as_i(i).funct3 == 3) // sltiu
-				xregs[as_i(i).rd] = (unsigned)xregs[as_i(i).rs1] < (unsigned)as_i(i).imm12;
-			else if (as_i(i).funct3 == 4) // xori
-				xregs[as_i(i).rd] = xregs[as_i(i).rs1] ^ as_i(i).imm12;
-			else if (as_i(i).funct3 == 5 && as_s(i).imm7 == 0) // srli
-				xregs[as_r(i).rd] = (unsigned)xregs[as_r(i).rs1] >> as_r(i).rs2;
-			else if (as_i(i).funct3 == 5 && as_s(i).imm7 == 16) // srai
-				xregs[as_r(i).rd] = (signed)xregs[as_r(i).rs1] >> as_r(i).rs2;
-			else if (as_i(i).funct3 == 6) // ori
-				xregs[as_i(i).rd] = xregs[as_i(i).rs1] | (unsigned)as_i(i).imm12;
-			else if (as_i(i).funct3 == 7) // andi
-				xregs[as_i(i).rd] = xregs[as_i(i).rs1] & (unsigned)as_i(i).imm12;
+			if (as_i(i).funct3() == 0) // addi (add signed immediate)
+				xregs[as_i(i).rd()] = xregs[as_i(i).rs1()] + as_i(i).imm12();
+			else if (as_i(i).funct3() == 1 && as_s(i).imm7() == 0) // slli
+				xregs[as_r(i).rd()] = xregs[as_r(i).rs1()] << as_r(i).rs2();
+			else if (as_i(i).funct3() == 2) // slti
+				xregs[as_i(i).rd()] = (signed)xregs[as_i(i).rs1()] < (signed)as_i(i).imm12();
+			else if (as_i(i).funct3() == 3) // sltiu
+				xregs[as_i(i).rd()] = (unsigned)xregs[as_i(i).rs1()] < (unsigned)as_i(i).imm12();
+			else if (as_i(i).funct3() == 4) // xori
+				xregs[as_i(i).rd()] = xregs[as_i(i).rs1()] ^ as_i(i).imm12();
+			else if (as_i(i).funct3() == 5 && as_s(i).imm7() == 0) // srli
+				xregs[as_r(i).rd()] = (unsigned)xregs[as_r(i).rs1()] >> as_r(i).rs2();
+			else if (as_i(i).funct3() == 5 && as_s(i).imm7() == 16) // srai
+				xregs[as_r(i).rd()] = (signed)xregs[as_r(i).rs1()] >> as_r(i).rs2();
+			else if (as_i(i).funct3() == 6) // ori
+				xregs[as_i(i).rd()] = xregs[as_i(i).rs1()] | (unsigned)as_i(i).imm12();
+			else if (as_i(i).funct3() == 7) // andi
+				xregs[as_i(i).rd()] = xregs[as_i(i).rs1()] & (unsigned)as_i(i).imm12();
 			else
 				{ RV32I_UnimplementedExit; }
 			return 0;
@@ -313,33 +420,33 @@ struct RISCVContainer
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x05) // auipc
 		{
-			xregs[as_u(i).rd] = (uint32_t)(pc - instruction_block.data()) + (u32{i} & as_u(i).MaskImm);
+			xregs[as_u(i).rd()] = (uint32_t)(pc - instruction_block.data()) + (u32{i} & as_u(i).MaskImm);
 			return 0;
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x0C)
 		{
-			if (as_i(i).rd == 0)
+			if (as_i(i).rd() == 0)
 				return 0;
-			if (as_s(i).funct3 == 0 && as_s(i).imm7 == 0) // add
-				xregs[as_r(i).rd] = xregs[as_s(i).rs1] + xregs[as_s(i).rs2];
-			else if (as_s(i).funct3 == 0 && as_s(i).imm7 == 32) // sub
-				xregs[as_r(i).rd] = xregs[as_s(i).rs1] - xregs[as_s(i).rs2];
-			else if (as_s(i).funct3 == 1 && as_s(i).imm7 == 0) // sll (shift left logical)
-				xregs[as_r(i).rd] = xregs[as_s(i).rs1] << xregs[as_s(i).rs2];
-			else if (as_s(i).funct3 == 2 && as_s(i).imm7 == 0) // slt
-				xregs[as_r(i).rd] = (signed)xregs[as_s(i).rs1] < (signed)xregs[as_s(i).rs2];
-			else if (as_s(i).funct3 == 3 && as_s(i).imm7 == 0) // sltu
-				xregs[as_r(i).rd] = (unsigned)xregs[as_s(i).rs1] < (unsigned)xregs[as_s(i).rs2];
-			else if (as_s(i).funct3 == 4 && as_s(i).imm7 == 0) // xor
-				xregs[as_r(i).rd] = (unsigned)xregs[as_s(i).rs1] ^ (unsigned)xregs[as_s(i).rs2];
-			else if (as_s(i).funct3 == 5 && as_s(i).imm7 == 0) // srl (shift right logical)
-				xregs[as_r(i).rd] = (unsigned)xregs[as_s(i).rs1] >> (xregs[as_s(i).rs2] & 0b11111);
-			else if (as_s(i).funct3 == 5 && as_s(i).imm7 == 32) // sra (shift right arithmetic)
-				xregs[as_r(i).rd] = (signed)xregs[as_s(i).rs1] >> (xregs[as_s(i).rs2] & 0b11111);
-			else if (as_s(i).funct3 == 6 && as_s(i).imm7 == 0) // or
-				xregs[as_r(i).rd] = xregs[as_s(i).rs1] | xregs[as_s(i).rs2];
-			else if (as_s(i).funct3 == 7 && as_s(i).imm7 == 0) // and
-				xregs[as_r(i).rd] = xregs[as_s(i).rs1] & xregs[as_s(i).rs2];
+			if (as_s(i).funct3() == 0 && as_s(i).imm7() == 0) // add
+				xregs[as_r(i).rd()] = xregs[as_s(i).rs1()] + xregs[as_s(i).rs2()];
+			else if (as_s(i).funct3() == 0 && as_s(i).imm7() == 32) // sub
+				xregs[as_r(i).rd()] = xregs[as_s(i).rs1()] - xregs[as_s(i).rs2()];
+			else if (as_s(i).funct3() == 1 && as_s(i).imm7() == 0) // sll (shift left logical)
+				xregs[as_r(i).rd()] = xregs[as_s(i).rs1()] << xregs[as_s(i).rs2()];
+			else if (as_s(i).funct3() == 2 && as_s(i).imm7() == 0) // slt
+				xregs[as_r(i).rd()] = (signed)xregs[as_s(i).rs1()] < (signed)xregs[as_s(i).rs2()];
+			else if (as_s(i).funct3() == 3 && as_s(i).imm7() == 0) // sltu
+				xregs[as_r(i).rd()] = (unsigned)xregs[as_s(i).rs1()] < (unsigned)xregs[as_s(i).rs2()];
+			else if (as_s(i).funct3() == 4 && as_s(i).imm7() == 0) // xor
+				xregs[as_r(i).rd()] = (unsigned)xregs[as_s(i).rs1()] ^ (unsigned)xregs[as_s(i).rs2()];
+			else if (as_s(i).funct3() == 5 && as_s(i).imm7() == 0) // srl (shift right logical)
+				xregs[as_r(i).rd()] = (unsigned)xregs[as_s(i).rs1()] >> (xregs[as_s(i).rs2()] & 0b11111);
+			else if (as_s(i).funct3() == 5 && as_s(i).imm7() == 32) // sra (shift right arithmetic)
+				xregs[as_r(i).rd()] = (signed)xregs[as_s(i).rs1()] >> (xregs[as_s(i).rs2()] & 0b11111);
+			else if (as_s(i).funct3() == 6 && as_s(i).imm7() == 0) // or
+				xregs[as_r(i).rd()] = xregs[as_s(i).rs1()] | xregs[as_s(i).rs2()];
+			else if (as_s(i).funct3() == 7 && as_s(i).imm7() == 0) // and
+				xregs[as_r(i).rd()] = xregs[as_s(i).rs1()] & xregs[as_s(i).rs2()];
 			else
 				{ RV32I_UnimplementedExit; }
 			return 0;
@@ -347,7 +454,7 @@ struct RISCVContainer
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x0D) // lui
 		{
-			xregs[as_u(i).rd] = u32{i} & as_u(i).MaskImm;
+			xregs[as_u(i).rd()] = u32{i} & as_u(i).MaskImm;
 			return 0;
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x1B) // jal
@@ -358,16 +465,16 @@ struct RISCVContainer
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x18)
 		{
-			printf("branch x%i, x%i, %i\n", as_b(i).rs1, as_b(i).rs2, as_b(i).offset());
-			if (as_b(i).funct3 == 2 || as_b(i).funct3 == 3) [[unlikely]]
+			printf("branch x%i, x%i, %i\n", as_b(i).rs1(), as_b(i).rs2(), as_b(i).offset());
+			if (as_b(i).funct3() == 2 || as_b(i).funct3() == 3) [[unlikely]]
 				{ RV32I_UnimplementedExit; }
 
-			if ((as_b(i).funct3 == 0 && xregs[as_b(i).rs1] == xregs[as_b(i).rs2])					||	// beq
-				(as_b(i).funct3 == 1 && xregs[as_b(i).rs1] == xregs[as_b(i).rs2])					||	// bne
-				(as_b(i).funct3 == 4 && (signed)xregs[as_b(i).rs1] <= (signed)xregs[as_b(i).rs2])	||	// blt
-				(as_b(i).funct3 == 5 && (signed)xregs[as_b(i).rs1] >= (signed)xregs[as_b(i).rs2])	||	// bge
-				(as_b(i).funct3 == 6 && xregs[as_b(i).rs1] <= xregs[as_b(i).rs2])					||	// bltu
-				(as_b(i).funct3 == 7 && xregs[as_b(i).rs1] >= xregs[as_b(i).rs2])					)	// bgeu
+			if ((as_b(i).funct3() == 0 && xregs[as_b(i).rs1()] == xregs[as_b(i).rs2()])					||	// beq
+				(as_b(i).funct3() == 1 && xregs[as_b(i).rs1()] == xregs[as_b(i).rs2()])					||	// bne
+				(as_b(i).funct3() == 4 && (signed)xregs[as_b(i).rs1()] <= (signed)xregs[as_b(i).rs2()])	||	// blt
+				(as_b(i).funct3() == 5 && (signed)xregs[as_b(i).rs1()] >= (signed)xregs[as_b(i).rs2()])	||	// bge
+				(as_b(i).funct3() == 6 && xregs[as_b(i).rs1()] <= xregs[as_b(i).rs2()])					||	// bltu
+				(as_b(i).funct3() == 7 && xregs[as_b(i).rs1()] >= xregs[as_b(i).rs2()])					)	// bgeu
 				pc += as_b(i).offset();
 
 			return 0;
@@ -376,10 +483,10 @@ struct RISCVContainer
 
 		if (i.family() == 0x3 && i.opcode() == 0x19)
 		{
-			printf("jalr x%i x%i %i", as_i(i).rd, as_i(i).rs1, as_i(i).imm12);
+			printf("jalr x%i x%i %i", as_i(i).rd(), as_i(i).rs1(), as_i(i).imm12());
 
 		}
-		printf("@%016llX Unknown instr: f=%i, op=%i, imm7=%i\n", pc, i.family(), i.opcode(), as_s(i).imm7);
+		printf("@%016llX Unknown instr: f=%i, op=%i, imm7=%i\n", pc, i.family(), i.opcode(), as_s(i).imm7());
 		return 0;
 	}
 
