@@ -12,15 +12,25 @@
 #error "No test runner implementation for this platform."
 #endif
 
+#if defined(RUNNER_SUPPORTED_WIN32)
+int testprocess(const wchar_t* path)
+#elif defined(RUNNER_SUPPORTED_POPEN)
 int testprocess(const char* path)
+#endif
 {
 	int exitcode = 1;
 #if defined(RUNNER_SUPPORTED_WIN32)
 	DWORD dwExitCode;
-	STARTUPINFOA startupInfo { 0 };
+	STARTUPINFOW startupInfo { 0 };
 	PROCESS_INFORMATION processInfo;
-	HANDLE hProcess = CreateProcessA(path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &processInfo);
-	WaitForSingleObject(hProcess);
+	BOOL success = CreateProcessW(path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &processInfo);
+	if (!success)
+	{
+		fprintf(stderr, "Failed to create process (%s)\n", path);
+		return 0;
+	}
+	HANDLE hProcess = processInfo.hProcess;
+	WaitForSingleObject(hProcess, INFINITE);
 	GetExitCodeProcess(hProcess, &dwExitCode);
 	exitcode = dwExitCode;
 #elif defined(RUNNER_SUPPORTED_POPEN)
@@ -36,7 +46,7 @@ int main(int argc, char* argv[])
 	{
 		std::filesystem::path entrypath = std::filesystem::absolute(entry.path());
 		
-		testprocess()
+		testprocess(entrypath.c_str());
 	}
 	return 0;
 }
