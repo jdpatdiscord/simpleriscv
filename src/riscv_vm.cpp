@@ -8,6 +8,12 @@
 #include <string.h>
 
 #include <bit>
+#include <memory>
+#include <vector>
+#include <ranges>
+#include <cstring>
+
+using std::bit_cast;
 
 struct RV32I_TypeR
 {
@@ -60,7 +66,7 @@ struct RV32I_TypeB
 		SRISCV_CX_STATIC uint32_t mask4 = 0b10000000000000000000000000000000; // >> 19
 		//                       0b00000000000000000001000000000000;
 		unsigned fin = 0;
-		auto value = [this]{return std::bit_cast<u32>(*this);};
+		auto value = [this]{return bit_cast<u32>(*this);};
 		fin |= (value() & mask1) << 4;
 		fin |= (value() & mask2) >> 7;
 		fin |= (value() & mask3) >> 20;
@@ -95,7 +101,7 @@ struct RV32I_TypeJ
 	  	static constexpr uint32_t MaskLowerInteger = 0b01111111111000000000000000000000;
 	  	static constexpr uint32_t MaskSignBit      = 0b10000000000000000000000000000000;
 		unsigned off = 0;
-		auto value = [this]{return std::bit_cast<u32>(*this);};
+		auto value = [this]{return bit_cast<u32>(*this);};
 		off |= (value() & MaskUpperInteger) << 11;
 		off |= (value() & MaskMiddleBit) << 2;
 		off |= (value() & MaskLowerInteger) >> 9;
@@ -191,45 +197,77 @@ struct RISCVContainer
 	// x31 -> t6 (Temporary 6)
 	uint32_t xregs[32];
 
-	uint32_t* pc;
-	uint32_t stack_region_size;
-	uint8_t* stack_region;
-	uint32_t instruction_block_size;
-	uint32_t* instruction_block;
+	static constexpr u32 stack_region_size = DefaultRISCVStackSize;
+
+	class InstructionBlock
+	{
+		std::unique_ptr<RISCVInstruction[]> m_data;
+		size_t m_size;
+
+		constexpr InstructionBlock(size_t size)
+		  : m_data{new(std::nothrow) RISCVInstruction[size]}
+		  , m_size{size}
+		{
+			if (!m_data)
+				RVCore_CriticalError("Failed to allocate instruction block");
+		}
+	public:
+		template<std::ranges::range R>
+		constexpr InstructionBlock(R instructions)
+		  : InstructionBlock{std::ranges::size(instructions)}
+		{
+			std::ranges::copy(instructions, m_data.get());
+		}
+
+		template<std::ranges::contiguous_range R>
+		constexpr InstructionBlock(R instructions)
+		  : InstructionBlock{std::ranges::size(instructions)}
+		{
+			std::memcpy(m_data.get(), std::ranges::data(instructions), std::ranges::size(instructions));
+		}
+
+		constexpr RISCVInstruction const* data() const noexcept {
+			return m_data.get();
+		}
+		constexpr size_t size() const noexcept {
+			return m_size;
+		}
+	};
+
+	
+	InstructionBlock instruction_block;
+	// uint8_t* stack_region;
+	RISCVInstruction const* pc;
 
 	const bool AddressWithinBounds(const void* address)
 	{
-		return address >= instruction_block && address < instruction_block + instruction_block_size / sizeof(*instruction_block);
+		return address >= instruction_block.data() &&
+			address < instruction_block.data() + instruction_block.size();
 	}
 
 	RISCVContainer() = delete;
-	RISCVContainer(const uint32_t* instructions, size_t array_size) 
-	{
-		memset(xregs, 0, sizeof(xregs));
-		stack_region_size = DefaultRISCVStackSize;
-		stack_region = (uint8_t*)_aligned_malloc(stack_region_size, 16);
-		if (!stack_region)
-			RVCore_CriticalError("Failed to allocate stack region");
-		memset(stack_region, 0, stack_region_size);
-		instruction_block_size = array_size;
-		instruction_block = (uint32_t*)_aligned_malloc(array_size, 4);
-		if (!instruction_block)
-			RVCore_CriticalError("Failed to allocate instruction block");
-		memcpy(instruction_block, instructions, array_size);
-		pc = instruction_block;
-	}
+	RISCVContainer(const uint32_t* instructions, size_t array_size)
+	  : instruction_block(std::views::counted(instructions, array_size))
+	//   , stack_region{nullptr}
+	  , pc{instruction_block.data()} {}
 
-	~RISCVContainer()
-	{
-		if (stack_region)
-			_aligned_free(stack_region/*, 16, stack_region_size*/);
-		if (instruction_block)
-			_aligned_free(instruction_block/*, 4, instruction_block_size*/);
-		stack_region = NULL;
-		instruction_block = NULL;
-		stack_region_size = 0;
-		instruction_block_size = 0;
-	}
+	template<std::ranges::range R>
+	RISCVContainer(R&& instruction_range)
+	  : instruction_block(std::forward<R>(instruction_range))
+	//   , stack_region{nullptr}
+	  , pc{instruction_block.data()} {}
+
+	// ~RISCVContainer()
+	// {
+	// 	if (stack_region)
+	// 		_aligned_free(stack_region/*, 16, stack_region_size*/);
+	// 	if (instruction_block)
+	// 		_aligned_free(instruction_block/*, 4, instruction_block_size*/);
+	// 	stack_region = NULL;
+	// 	instruction_block = NULL;
+	// 	stack_region_size = 0;
+	// 	instruction_block_size = 0;
+	// }
 
 	int PerformCycle()
 	{
@@ -238,12 +276,12 @@ struct RISCVContainer
 		xregs[0] = 0;
 		RISCVInstruction i = {*pc++};
 
-		auto as_u = [](u32 v){return std::bit_cast<RV32I_TypeU>(v);};
-        auto as_s = [](u32 const& v){return std::bit_cast<RV32I_TypeS>(v);};
-		auto as_i = [](u32 const& v){return std::bit_cast<RV32I_TypeI>(v);};
-		auto as_r = [](u32 const& v){return std::bit_cast<RV32I_TypeR>(v);};
-		auto as_b = [](u32 const& v){return std::bit_cast<RV32I_TypeB>(v);};
-		auto as_j = [](u32 const& v){return std::bit_cast<RV32I_TypeJ>(v);};
+		auto as_u = [](u32 v){return bit_cast<RV32I_TypeU>(v);};
+        auto as_s = [](u32 const& v){return bit_cast<RV32I_TypeS>(v);};
+		auto as_i = [](u32 const& v){return bit_cast<RV32I_TypeI>(v);};
+		auto as_r = [](u32 const& v){return bit_cast<RV32I_TypeR>(v);};
+		auto as_b = [](u32 const& v){return bit_cast<RV32I_TypeB>(v);};
+		auto as_j = [](u32 const& v){return bit_cast<RV32I_TypeJ>(v);};
 
 		if (i.family() == 0x3 && i.opcode() == 0x00)
 		{
@@ -280,7 +318,7 @@ struct RISCVContainer
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x05) // auipc
 		{
-			xregs[as_u(i).rd] = (uint32_t)(pc - instruction_block) + (u32{i} & as_u(i).MaskImm);
+			xregs[as_u(i).rd] = (uint32_t)(pc - instruction_block.data()) + (u32{i} & as_u(i).MaskImm);
 			return 0;
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x0C)
@@ -319,7 +357,7 @@ struct RISCVContainer
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x1B) // jal
 		{
-			printf("%s %i\t; pc is now %i\n", "jal", as_j(i).offset(), instruction_block - pc);
+			printf("%s %i\t; pc is now %i\n", "jal", as_j(i).offset(), instruction_block.data() - pc);
 			pc += as_j(i).offset();
 			return 0;
 		}
@@ -386,7 +424,7 @@ const uint32_t rv32_bin[] = {
 
 int main(int argc, char* argv[])
 {
-	RISCVContainer runner(rv32_bin, sizeof(rv32_bin));
+	RISCVContainer runner(rv32_bin);
 	runner.Run();
 	return 0;
 }
