@@ -9,6 +9,8 @@
 
 #include <bit>
 
+using std::bit_cast;
+
 struct RV32I_TypeR
 {
 	unsigned opcode : 7;
@@ -60,7 +62,7 @@ struct RV32I_TypeB
 		SRISCV_CX_STATIC uint32_t mask4 = 0b10000000000000000000000000000000; // >> 19
 		//                       0b00000000000000000001000000000000;
 		unsigned fin = 0;
-		auto value = [this]{return std::bit_cast<u32>(*this);};
+		auto value = [this]{return bit_cast<u32>(*this);};
 		fin |= (value() & mask1) << 4;
 		fin |= (value() & mask2) >> 7;
 		fin |= (value() & mask3) >> 20;
@@ -95,7 +97,7 @@ struct RV32I_TypeJ
 	  	static constexpr uint32_t MaskLowerInteger = 0b01111111111000000000000000000000;
 	  	static constexpr uint32_t MaskSignBit      = 0b10000000000000000000000000000000;
 		unsigned off = 0;
-		auto value = [this]{return std::bit_cast<u32>(*this);};
+		auto value = [this]{return bit_cast<u32>(*this);};
 		off |= (value() & MaskUpperInteger) << 11;
 		off |= (value() & MaskMiddleBit) << 2;
 		off |= (value() & MaskLowerInteger) >> 9;
@@ -238,12 +240,12 @@ struct RISCVContainer
 		xregs[0] = 0;
 		RISCVInstruction i = {*pc++};
 
-		auto as_u = [](u32 v){return std::bit_cast<RV32I_TypeU>(v);};
-        auto as_s = [](u32 v){return std::bit_cast<RV32I_TypeS>(v);};
-		auto as_i = [](u32 v){return std::bit_cast<RV32I_TypeI>(v);};
-		auto as_r = [](u32 v){return std::bit_cast<RV32I_TypeR>(v);};
-		auto as_b = [](u32 v){return std::bit_cast<RV32I_TypeB>(v);};
-		auto as_j = [](u32 v){return std::bit_cast<RV32I_TypeJ>(v);};
+		auto as_u = [](u32 v){return bit_cast<RV32I_TypeU>(v);};
+        auto as_s = [](u32 v){return bit_cast<RV32I_TypeS>(v);};
+		auto as_i = [](u32 v){return bit_cast<RV32I_TypeI>(v);};
+		auto as_r = [](u32 v){return bit_cast<RV32I_TypeR>(v);};
+		auto as_b = [](u32 v){return bit_cast<RV32I_TypeB>(v);};
+		auto as_j = [](u32 v){return bit_cast<RV32I_TypeJ>(v);};
 
 		if (i.family() == 0x3 && i.opcode() == 0x00)
 		{
