@@ -138,11 +138,10 @@ struct RV32I_TypeB
 		SRISCV_CX_STATIC uint32_t mask4 = 0b10000000000000000000000000000000; // >> 19
 		//                       0b00000000000000000001000000000000;
 		unsigned fin = 0;
-		auto value = [this]{return bit_cast<u32>(*this);};
-		fin |= (value() & mask1) << 4;
-		fin |= (value() & mask2) >> 7;
-		fin |= (value() & mask3) >> 20;
-		fin |= (signed)(value() & mask4) >> 19;
+		fin |= (m_value & mask1) << 4;
+		fin |= (m_value & mask2) >> 7;
+		fin |= (m_value & mask3) >> 20;
+		fin |= (signed)(m_value & mask4) >> 19;
 		return (signed)fin / 4 - 1;
 	}
 
