@@ -1,6 +1,16 @@
 # SimpleRISCV
 A simple RISC-V implementation that aims to be source-as-documentation for the architecture and its extensions
 
+# Building & testing 
+`git clone https://github.com/jdpatdiscord/simpleriscv`
+`cd simpleriscv/`
+`cmake -S . -B build`
+`cmake --build build`
+`cd tests/`
+`cmake -S . -B build`
+`cmake --build build`
+`./build/TestRunner.exe` / `./build/TestRunner`
+
 # Contributor guidelines
 * Any pull request opened must leave the master branch in a compiling & working state. 
 * Must maintain ISO C++20. If any speed benefits are are possible with non-ISO C++20, it must be under preprocessor check.
