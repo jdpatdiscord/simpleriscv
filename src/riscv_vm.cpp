@@ -377,18 +377,9 @@ struct RISCVContainer
 
 		if (i.family() == 0x3 && i.opcode() == 0x00)
 		{
-<<<<<<< Updated upstream
-			if (as_i(i).funct3 == 0) 
-				;
-||||||| Stash base
-			if (as_i(i).funct3 == 0) {
-
-			}
-=======
 			if (as_i(i).funct3() == 0) {
 
 			}
->>>>>>> Stashed changes
 
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x04)
