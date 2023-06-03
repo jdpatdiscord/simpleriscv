@@ -199,7 +199,7 @@ struct RISCVContainer
 	// x29 -> t4 (Temporary 4)
 	// x30 -> t5 (Temporary 5)
 	// x31 -> t6 (Temporary 6)
-	uint32_t xregs[32];
+	uint32_t xregs[32] = {};
 
 	static constexpr u32 stack_region_size = DefaultRISCVStackSize;
 
