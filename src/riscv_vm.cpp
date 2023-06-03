@@ -239,11 +239,11 @@ struct RISCVContainer
 		RISCVInstruction i = {*pc++};
 
 		auto as_u = [](u32 v){return std::bit_cast<RV32I_TypeU>(v);};
-        auto as_s = [](u32 const& v){return std::bit_cast<RV32I_TypeS>(v);};
-		auto as_i = [](u32 const& v){return std::bit_cast<RV32I_TypeI>(v);};
-		auto as_r = [](u32 const& v){return std::bit_cast<RV32I_TypeR>(v);};
-		auto as_b = [](u32 const& v){return std::bit_cast<RV32I_TypeB>(v);};
-		auto as_j = [](u32 const& v){return std::bit_cast<RV32I_TypeJ>(v);};
+        auto as_s = [](u32 v){return std::bit_cast<RV32I_TypeS>(v);};
+		auto as_i = [](u32 v){return std::bit_cast<RV32I_TypeI>(v);};
+		auto as_r = [](u32 v){return std::bit_cast<RV32I_TypeR>(v);};
+		auto as_b = [](u32 v){return std::bit_cast<RV32I_TypeB>(v);};
+		auto as_j = [](u32 v){return std::bit_cast<RV32I_TypeJ>(v);};
 
 		if (i.family() == 0x3 && i.opcode() == 0x00)
 		{
