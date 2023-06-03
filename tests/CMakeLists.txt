@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.15)
 project(RISCVTests)
 
 add_executable(TestRunner testrunner.cpp)
+target_compile_options(TestRunner PUBLIC -std=c++20 -Wall -Wextra -O2)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY testbin/)
 
 add_executable(BranchTest src/branch.cpp)
 target_compile_options(BranchTest PUBLIC -std=c++20 -Wall -Wextra -O2)
