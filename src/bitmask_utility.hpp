@@ -12,12 +12,12 @@ constexpr T make_bitmask(uInt start, uInt end)
     auto bit_count = high - low + 1;
 
     u64 ret = 0u;
-    for (auto ii = 0zu; ii < bit_count; ++ii)
+    for (auto ii = size_t{0}; ii < bit_count; ++ii)
     {
         ret = ret << 1;
         ret += 1u;
     }
-    for (auto ii = 0zu; ii < low; ++ii) {
+    for (auto ii = size_t{0}; ii < low; ++ii) {
         ret = ret << 1;
     }
     return static_cast<T>(ret);
