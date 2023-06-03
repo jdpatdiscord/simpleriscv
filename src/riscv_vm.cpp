@@ -8,8 +8,14 @@
 #include <string.h>
 
 #include <bit>
+#include <memory>
+#include <vector>
+#include <ranges>
+#include <cstring>
 
 using std::bit_cast;
+
+namespace stdr = std::ranges;
 
 struct RV32I_TypeR
 {
@@ -106,7 +112,9 @@ struct RV32I_TypeJ
 	};
 };
 
-struct RISCVInstruction
+static constexpr size_t instruction_alignment = 4;
+
+struct alignas(instruction_alignment) RISCVInstruction
 {
 	u32 _v;
 	// unsigned family : 2;
@@ -122,7 +130,7 @@ struct RISCVInstruction
 	}
 
 	constexpr u32 value() const noexcept {
-		return extract_bits<8, 31>(_v);
+		return extract_bits<7, 31>(_v);
 	}
 
     constexpr operator u32() const noexcept {
@@ -191,47 +199,70 @@ struct RISCVContainer
 	// x29 -> t4 (Temporary 4)
 	// x30 -> t5 (Temporary 5)
 	// x31 -> t6 (Temporary 6)
-	uint32_t xregs[32];
+	uint32_t xregs[32] = {};
 
-	uint32_t* pc;
-	uint32_t stack_region_size;
-	uint8_t* stack_region;
-	uint32_t instruction_block_size;
-	uint32_t* instruction_block;
+	static constexpr u32 stack_region_size = DefaultRISCVStackSize;
 
-	const bool AddressWithinBounds(const void* address)
+	class InstructionBlock
 	{
-		return address >= instruction_block && address < instruction_block + instruction_block_size / sizeof(*instruction_block);
+		std::unique_ptr<RISCVInstruction[]> m_data;
+		size_t m_size;
+
+		constexpr InstructionBlock(size_t size)
+		  : m_data{new(std::nothrow) RISCVInstruction[size]}
+		  , m_size{size}
+		{
+			if (!m_data)
+				RVCore_CriticalError("Failed to allocate instruction block");
+			memset(m_data.get(), '\000', size);
+		}
+	public:
+		// accepts any range, even ones with non contiguous memory (a linked list for example (dont do that though))
+		template<stdr::range R>
+		constexpr InstructionBlock(R&& instructions)
+		  : InstructionBlock{stdr::size(instructions)}
+		{
+			stdr::copy(instructions, m_data.get());
+		}
+
+		// uses memcpy when the passed in data is contiguous,
+		// (the copy algorithm should also do this, but this is the classic way)
+		template<stdr::contiguous_range R>
+		constexpr InstructionBlock(R&& instructions)
+		  : InstructionBlock{stdr::size(instructions)}
+		{
+			std::memcpy(m_data.get(), stdr::data(instructions), stdr::size(instructions) * sizeof(stdr::range_value_t<R>));
+		}
+
+		constexpr RISCVInstruction const* data() const noexcept {
+			return m_data.get();
+		}
+		constexpr size_t size() const noexcept {
+			return m_size;
+		}
+	};
+
+	InstructionBlock instruction_block;
+	// uint8_t* stack_region;
+	RISCVInstruction const* pc;
+
+	bool AddressWithinBounds(const void* address)
+	{
+		return address >= instruction_block.data() &&
+			address < instruction_block.data() + instruction_block.size();
 	}
 
 	RISCVContainer() = delete;
-	RISCVContainer(const uint32_t* instructions, size_t array_size) 
-	{
-		memset(xregs, 0, sizeof(xregs));
-		stack_region_size = DefaultRISCVStackSize;
-		stack_region = (uint8_t*)_aligned_malloc(stack_region_size, 16);
-		if (!stack_region)
-			RVCore_CriticalError("Failed to allocate stack region");
-		memset(stack_region, 0, stack_region_size);
-		instruction_block_size = array_size;
-		instruction_block = (uint32_t*)_aligned_malloc(array_size, 4);
-		if (!instruction_block)
-			RVCore_CriticalError("Failed to allocate instruction block");
-		memcpy(instruction_block, instructions, array_size);
-		pc = instruction_block;
-	}
+	RISCVContainer(const uint32_t* instructions, size_t array_size)
+	  : instruction_block(std::views::counted(instructions, array_size / 4))
+	//   , stack_region{nullptr}
+	  , pc{instruction_block.data()} {}
 
-	~RISCVContainer()
-	{
-		if (stack_region)
-			_aligned_free(stack_region/*, 16, stack_region_size*/);
-		if (instruction_block)
-			_aligned_free(instruction_block/*, 4, instruction_block_size*/);
-		stack_region = NULL;
-		instruction_block = NULL;
-		stack_region_size = 0;
-		instruction_block_size = 0;
-	}
+	template<stdr::range R>
+	RISCVContainer(R&& instruction_range)
+	  : instruction_block(std::forward<R>(instruction_range))
+	//   , stack_region{nullptr}
+	  , pc{instruction_block.data()} {}
 
 	int PerformCycle()
 	{
@@ -282,7 +313,7 @@ struct RISCVContainer
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x05) // auipc
 		{
-			xregs[as_u(i).rd] = (uint32_t)(pc - instruction_block) + (u32{i} & as_u(i).MaskImm);
+			xregs[as_u(i).rd] = (uint32_t)(pc - instruction_block.data()) + (u32{i} & as_u(i).MaskImm);
 			return 0;
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x0C)
@@ -321,7 +352,7 @@ struct RISCVContainer
 		}
 		if (i.family() == 0x3 && i.opcode() == 0x1B) // jal
 		{
-			printf("%s %i\t; pc is now %i\n", "jal", as_j(i).offset(), instruction_block - pc);
+			printf("%s %i\t; pc is now %i\n", "jal", as_j(i).offset(), instruction_block.data() - pc);
 			pc += as_j(i).offset();
 			return 0;
 		}
