@@ -21,12 +21,13 @@ int testprocess(const char* path)
 	int exitcode = 1;
 #if defined(RUNNER_SUPPORTED_WIN32)
 	DWORD dwExitCode;
-	STARTUPINFOW startupInfo { 0 };
+	STARTUPINFOW startupInfo;
+	memset(&startupInfo, 0, sizeof(startupInfo));
 	PROCESS_INFORMATION processInfo;
 	BOOL success = CreateProcessW(path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &processInfo);
 	if (!success)
 	{
-		fprintf(stderr, "Failed to create process (%s)\n", path);
+		fprintf(stderr, "Failed to create process (%S)\n", path);
 		return 0;
 	}
 	HANDLE hProcess = processInfo.hProcess;
@@ -40,7 +41,7 @@ int testprocess(const char* path)
 	return exitcode;
 }
 
-int main(int argc, char* argv[])
+int main()
 {
 	for (auto& entry : std::filesystem::directory_iterator("./testbin"))
 	{

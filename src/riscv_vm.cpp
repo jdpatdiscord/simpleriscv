@@ -6,15 +6,15 @@ int RISCVContainer::PerformCycle()
         return RVE_InstructionOOB;
     xregs[0] = 0;
     RISCVInstruction insn = {*pc++};
-    auto as_u = [](u32 v){return bit_cast<RV32I_TypeU>(v);};
-    auto as_s = [](u32 v){return bit_cast<RV32I_TypeS>(v);};
-    auto as_i = [](u32 v){return bit_cast<RV32I_TypeI>(v);};
-    auto as_r = [](u32 v){return bit_cast<RV32I_TypeR>(v);};
-    auto as_b = [](u32 v){return bit_cast<RV32I_TypeB>(v);};
-    auto as_j = [](u32 v){return bit_cast<RV32I_TypeJ>(v);};
+    auto as_u = [](u32 v){return std::bit_cast<RV32I_TypeU>(v);};
+    auto as_s = [](u32 v){return std::bit_cast<RV32I_TypeS>(v);};
+    auto as_i = [](u32 v){return std::bit_cast<RV32I_TypeI>(v);};
+    auto as_r = [](u32 v){return std::bit_cast<RV32I_TypeR>(v);};
+    auto as_b = [](u32 v){return std::bit_cast<RV32I_TypeB>(v);};
+    auto as_j = [](u32 v){return std::bit_cast<RV32I_TypeJ>(v);};
     if (insn.family() == 0x3 && insn.opcode() == 0x00)
     {
-        if (as_i(insn).funct3() == 0) {
+        if (as_i(insn).funct3() == 0) { // lb
         }
     }
     if (insn.family() == 0x3 && insn.opcode() == 0x04)
@@ -84,7 +84,8 @@ int RISCVContainer::PerformCycle()
     }
     if (insn.family() == 0x3 && insn.opcode() == 0x0D) // lui
     {
-        xregs[as_u(insn).rd()] = u32{insn} & as_u(insn).MaskImm;
+        auto u = as_u(insn);
+        xregs[u.rd()] = u32{insn} & u.MaskImm;
         return 0;
     }
     if (insn.family() == 0x3 && insn.opcode() == 0x1B) // jal

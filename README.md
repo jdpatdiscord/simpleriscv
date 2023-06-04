@@ -4,13 +4,14 @@ A simple RISC-V implementation that aims to be source-as-documentation for the a
 # Building & testing 
 ```
 git clone https://github.com/jdpatdiscord/simpleriscv
-cd simpleriscv/
+cd simpleriscv/tests/
 cmake -S . -B build
 cmake --build build
-cd tests/
-cmake -S . -B build
-cmake --build build
-./build/TestRunner.exe
+cd build
+# Windows:
+./TestRunner.exe
+# others:
+./TestRunner
 ```
 
 # Contributor guidelines

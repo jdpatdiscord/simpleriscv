@@ -16,8 +16,6 @@
 #include <ranges>
 #include <cstring>
 
-using std::bit_cast;
-
 namespace stdr = std::ranges;
 
 struct RV32I_TypeR
@@ -200,10 +198,10 @@ struct RV32I_TypeJ
 
     signed offset()
     {
-          static constexpr uint32_t MaskUpperInteger = 0b00000000000011111111000000000000;
-          static constexpr uint32_t MaskMiddleBit    = 0b00000000000100000000000000000000;
-          static constexpr uint32_t MaskLowerInteger = 0b01111111111000000000000000000000;
-          static constexpr uint32_t MaskSignBit      = 0b10000000000000000000000000000000;
+        static constexpr uint32_t MaskUpperInteger = 0b00000000000011111111000000000000;
+        static constexpr uint32_t MaskMiddleBit    = 0b00000000000100000000000000000000;
+        static constexpr uint32_t MaskLowerInteger = 0b01111111111000000000000000000000;
+        static constexpr uint32_t MaskSignBit      = 0b10000000000000000000000000000000;
         unsigned off = 0;
         off |= (m_value & MaskUpperInteger) << 11;
         off |= (m_value & MaskMiddleBit) << 2;
