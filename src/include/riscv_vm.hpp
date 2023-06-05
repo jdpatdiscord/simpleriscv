@@ -250,7 +250,7 @@ static_assert(sizeof(RISCVInstruction) == 4, "sizeof(RV32Instr) != 4 (must add u
 #define RV32I_UnimplementedExit fputs("Currently Unimplemented / Unreachable", stderr); fflush(stderr); exit(1)
 #define RV32I_IllegalExit fputs("Illegal instruction", stderr); fflush(stderr); exit(1)
 
-__attribute((noreturn)) void RVCore_CriticalError(const char* message)
+__attribute((noreturn)) static void RVCore_CriticalError(const char* message)
 {
     fputs(message, stderr);
     fflush(stderr);

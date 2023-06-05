@@ -23,6 +23,9 @@ int testprocess(const char* path)
 	DWORD dwExitCode;
 	STARTUPINFOW startupInfo;
 	memset(&startupInfo, 0, sizeof(startupInfo));
+	//startupInfo.dwFlags &= STARTF_USESTDHANDLES;
+	//startupInfo.hStdOutput = (HANDLE)-1;
+	//startupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 	PROCESS_INFORMATION processInfo;
 	BOOL success = CreateProcessW(path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &processInfo);
 	if (!success)
@@ -47,7 +50,14 @@ int main()
 	{
 		std::filesystem::path entrypath = std::filesystem::absolute(entry.path());
 		int res = testprocess(entrypath.c_str());
-		printf("Code %i for %s\n", res, entry.path().filename().string().c_str());
+		const auto exename = entry.path().filename().string();
+		printf(
+			"%s%s%s: Code %i for %s\n",
+			res != 0 ? "\x1B[31m" : "\x1B[32m",
+			res != 0 ? "FAIL" : "PASS",
+			"\033[0m",
+			res,
+			exename.c_str());
 	}
 	return 0;
 }

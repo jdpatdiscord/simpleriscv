@@ -101,10 +101,10 @@ int RISCVContainer::PerformCycle()
         if (b.funct3() == 2 || b.funct3() == 3) [[unlikely]]
             { RV32I_UnimplementedExit; }
         if ((b.funct3() == 0 && xregs[b.rs1()] == xregs[b.rs2()])                    ||    // beq
-            (b.funct3() == 1 && xregs[b.rs1()] == xregs[b.rs2()])                    ||    // bne
-            (b.funct3() == 4 && (signed)xregs[b.rs1()] <= (signed)xregs[b.rs2()])    ||    // blt
+            (b.funct3() == 1 && xregs[b.rs1()] != xregs[b.rs2()])                    ||    // bne
+            (b.funct3() == 4 && (signed)xregs[b.rs1()] < (signed)xregs[b.rs2()])    ||    // blt
             (b.funct3() == 5 && (signed)xregs[b.rs1()] >= (signed)xregs[b.rs2()])    ||    // bge
-            (b.funct3() == 6 && xregs[b.rs1()] <= xregs[b.rs2()])                    ||    // bltu
+            (b.funct3() == 6 && xregs[b.rs1()] < xregs[b.rs2()])                    ||    // bltu
             (b.funct3() == 7 && xregs[b.rs1()] >= xregs[b.rs2()])                    )     // bgeu
             pc += as_b(insn).offset();
         return 0;
@@ -127,7 +127,7 @@ void RISCVContainer::Run()
         int result = PerformCycle();
         if (result != 0)
         {
-            printf("Exit: %i\n", result);
+            //printf("Exit: %i\n", result);
             cont = 0;
         }
     }
