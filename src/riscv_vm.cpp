@@ -1,5 +1,17 @@
 #include "riscv_vm.hpp"
 
+// Currently implemented:
+// From I-base:
+// addi, slli, slti, sltiu, xori, srli, srai, ori, andi
+// auipc
+// add, sub, sll, slt, sltu, xor, srl, sra, or, and
+// lui
+// jal
+// beq bne blt bge bltu bgeu
+
+// From Zbb-extension:
+// clz, ctz, max, maxu, min, minu, orn
+
 int RISCVContainer::PerformCycle()
 {
     if (!AddressWithinBounds(pc))
@@ -28,6 +40,10 @@ int RISCVContainer::PerformCycle()
             xregs[i.rd()] = xregs[i.rs1()] + i.imm12();
         else if (r.funct3() == 1 && r.funct7() == 0) // slli
             xregs[r.rd()] = xregs[r.rs1()] << r.rs2(); // rs2 == shamt
+        else if (r.funct3() == 1 && r.funct7() == 48 && r.rs2() == 0) // clz (Zbb-ext)
+            xregs[r.rd()] = std::countr_zero(xregs[r.rs1()]);
+        else if (r.funct3() == 1 && r.funct7() == 48 && r.rs2() == 1) // ctz (Zbb-ext)
+            xregs[r.rd()] = std::countl_zero(xregs[r.rs1()]);
         else if (i.funct3() == 2) // slti
             xregs[i.rd()] = (signed)xregs[i.rs1()] < (signed)i.imm12();
         else if (i.funct3() == 3) // sltiu
@@ -69,12 +85,22 @@ int RISCVContainer::PerformCycle()
             xregs[r.rd()] = (unsigned)xregs[r.rs1()] < (unsigned)xregs[r.rs2()];
         else if (r.funct3() == 4 && r.funct7() == 0) // xor
             xregs[r.rd()] = (unsigned)xregs[r.rs1()] ^ (unsigned)xregs[r.rs2()];
+        else if (r.funct3() == 4 && r.funct7() == 5) // min (signed) (Zbb-ext)
+            xregs[r.rd()] = std::min((signed)xregs[r.rs1()], (signed)xregs[r.rs2()]);
+        else if (r.funct3() == 5 && r.funct7() == 5) // minu (unsigned) (Zbb-ext)
+            xregs[r.rd()] = std::min(xregs[r.rs1()], xregs[r.rs2()]);
         else if (r.funct3() == 5 && r.funct7() == 0) // srl (shift right logical)
             xregs[r.rd()] = (unsigned)xregs[r.rs1()] >> (xregs[r.rs2()] & 0b11111);
         else if (r.funct3() == 5 && r.funct7() == 32) // sra (shift right arithmetic)
             xregs[r.rd()] = (signed)xregs[r.rs1()] >> (xregs[r.rs2()] & 0b11111);
+        else if (r.funct3() == 6 && r.funct7() == 32) // orn (Zbb-ext, Zbkb-ext)
+            xregs[r.rd()] = xregs[r.rs1()] | ~xregs[r.rs2()];
         else if (r.funct3() == 6 && r.funct7() == 0) // or
             xregs[r.rd()] = xregs[r.rs1()] | xregs[r.rs2()];
+        else if (r.funct3() == 6 && r.funct7() == 5) // max (signed) (Zbb-ext)
+            xregs[r.rd()] = std::max((signed)xregs[r.rs1()], (signed)xregs[r.rs2()]);
+        else if (r.funct3() == 7 && r.funct7() == 5) // maxu (unsigned) (Zbb-ext)
+            xregs[r.rd()] = std::max(xregs[r.rs1()], xregs[r.rs2()]);
         else if (r.funct3() == 7 && r.funct7() == 0) // and
             xregs[r.rd()] = xregs[r.rs1()] & xregs[r.rs2()];
         else
@@ -85,7 +111,7 @@ int RISCVContainer::PerformCycle()
     if (insn.family() == 0x3 && insn.opcode() == 0x0D) // lui
     {
         auto u = as_u(insn);
-        xregs[u.rd()] = u32{insn} & u.MaskImm;
+        xregs[u.rd()] = u32(insn) & u.MaskImm;
         return 0;
     }
     if (insn.family() == 0x3 && insn.opcode() == 0x1B) // jal
@@ -102,9 +128,9 @@ int RISCVContainer::PerformCycle()
             { RV32I_UnimplementedExit; }
         if ((b.funct3() == 0 && xregs[b.rs1()] == xregs[b.rs2()])                    ||    // beq
             (b.funct3() == 1 && xregs[b.rs1()] != xregs[b.rs2()])                    ||    // bne
-            (b.funct3() == 4 && (signed)xregs[b.rs1()] < (signed)xregs[b.rs2()])    ||    // blt
+            (b.funct3() == 4 && (signed)xregs[b.rs1()] < (signed)xregs[b.rs2()])     ||    // blt
             (b.funct3() == 5 && (signed)xregs[b.rs1()] >= (signed)xregs[b.rs2()])    ||    // bge
-            (b.funct3() == 6 && xregs[b.rs1()] < xregs[b.rs2()])                    ||    // bltu
+            (b.funct3() == 6 && xregs[b.rs1()] < xregs[b.rs2()])                     ||    // bltu
             (b.funct3() == 7 && xregs[b.rs1()] >= xregs[b.rs2()])                    )     // bgeu
             pc += as_b(insn).offset();
         return 0;
