@@ -235,17 +235,6 @@ struct alignas(instruction_alignment) RISCVInstruction
     }
 };
 
-static_assert(RISCVInstruction{0x00178793}.family() == 0x3);
-static_assert(RISCVInstruction{0x00178793}.opcode() == 0x04);
-
-static_assert(sizeof(RV32I_TypeR) == 4, "sizeof(RV32I_TypeR) != 4 (must add up to 32 bits)");
-static_assert(sizeof(RV32I_TypeI) == 4, "sizeof(RV32I_TypeI) != 4 (must add up to 32 bits)");
-static_assert(sizeof(RV32I_TypeS) == 4, "sizeof(RV32I_TypeS) != 4 (must add up to 32 bits)");
-static_assert(sizeof(RV32I_TypeB) == 4, "sizeof(RV32I_TypeB) != 4 (must add up to 32 bits)");
-static_assert(sizeof(RV32I_TypeU) == 4, "sizeof(RV32I_TypeU) != 4 (must add up to 32 bits)");
-static_assert(sizeof(RV32I_TypeJ) == 4, "sizeof(RV32I_TypeJ) != 4 (must add up to 32 bits)");
-static_assert(sizeof(RISCVInstruction) == 4, "sizeof(RV32Instr) != 4 (must add up to 32 bits)");
-
 #define RV64I_UnimplementedExit fputs("RV64I Only: Unimplemented", stderr); fflush(stderr); exit(1)
 #define RV32I_UnimplementedExit fputs("Currently Unimplemented / Unreachable", stderr); fflush(stderr); exit(1)
 #define RV32I_IllegalExit fputs("Illegal instruction", stderr); fflush(stderr); exit(1)
@@ -258,9 +247,10 @@ __attribute((noreturn)) static void RVCore_CriticalError(const char* message)
 }
 
 #define DefaultRISCVStackSize 0x20000
-#define DefaultRISCVInstructionBlockSize 0x20000
 
-#define RVE_InstructionOOB 0x1
+#define ErrorOutOfBounds 0x1
+#define ErrorNotHandled 0x2
+
 
 struct RISCVContainer
 {
@@ -361,8 +351,31 @@ struct RISCVContainer
     //   , stack_region{nullptr}
       , pc{instruction_block.data()} {}
 
-    int PerformCycle();
-    void Run();
+    static constexpr auto as_u = [](u32 v){return std::bit_cast<RV32I_TypeU>(v);};
+    static constexpr auto as_s = [](u32 v){return std::bit_cast<RV32I_TypeS>(v);};
+    static constexpr auto as_i = [](u32 v){return std::bit_cast<RV32I_TypeI>(v);};
+    static constexpr auto as_r = [](u32 v){return std::bit_cast<RV32I_TypeR>(v);};
+    static constexpr auto as_b = [](u32 v){return std::bit_cast<RV32I_TypeB>(v);};
+    static constexpr auto as_j = [](u32 v){return std::bit_cast<RV32I_TypeJ>(v);};
+
+    // Base 32-bit ISA
+    int BaseI();
+    // Atomic instructions
+    int ExtensionA();
+    // Bit manipulation
+    int ExtensionB();
+    // Compressed instructions
+    int ExtensionC();
+    // Double-precision floating-point
+    int ExtensionD();
+    // Single-precision floating-point
+    int ExtensionF();
+    // Basic bit-manipulation
+    int ExtensionZbb();
+    // Quad-Precision Floating-Point (IEEE 754-2008)
+    int ExtensionQ();
+
+    int Execute();
 };
 
 #endif

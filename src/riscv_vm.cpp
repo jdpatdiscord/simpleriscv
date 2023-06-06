@@ -12,21 +12,75 @@
 // From Zbb-extension:
 // clz, ctz, max, maxu, min, minu, orn
 
+int RISCVContainer::BaseI()
+{
+    RISCVInstruction insn = *pc++;
+    if (insn.family() != 3)
+        return ErrorNotHandled;
+    if (insn.opcode() == 4)
+    {
+        if (i.funct3() == 0) // addi (add signed immediate)
+            xregs[i.rd()] = xregs[i.rs1()] + (signed)i.imm12();
+    }
+    return ErrorNotHandled;
+};
+int RISCVContainer::ExtensionA()
+{
+    return 0;
+};
+int RISCVContainer::ExtensionB()
+{
+    return 0;
+};
+int RISCVContainer::ExtensionC()
+{
+    return 0;
+};
+int RISCVContainer::ExtensionD()
+{
+    return 0;
+};
+int RISCVContainer::ExtensionF()
+{
+    return 0;
+};
+int RISCVContainer::ExtensionQ()
+{
+    return 0;
+};
+int RISCVContainer::ExtensionZbb()
+{
+    return 0;
+};
+
+int RISCVContainer::Execute()
+{
+    while (1)
+    {
+        xregs[0] = 0;
+        if (!AddressWithinBounds(pc))
+            return ErrorOutOfBounds;
+        if (BaseI()) continue;
+        if (ExtensionC()) continue;
+        if (ExtensionB()) continue;
+        if (ExtensionF()) continue;
+        if (ExtensionD()) continue;
+        if (ExtensionA()) continue;
+        return ErrorNotHandled;
+    }
+};
+
+/*
 int RISCVContainer::PerformCycle()
 {
     if (!AddressWithinBounds(pc))
         return RVE_InstructionOOB;
     xregs[0] = 0;
     RISCVInstruction insn = {*pc++};
-    auto as_u = [](u32 v){return std::bit_cast<RV32I_TypeU>(v);};
-    auto as_s = [](u32 v){return std::bit_cast<RV32I_TypeS>(v);};
-    auto as_i = [](u32 v){return std::bit_cast<RV32I_TypeI>(v);};
-    auto as_r = [](u32 v){return std::bit_cast<RV32I_TypeR>(v);};
-    auto as_b = [](u32 v){return std::bit_cast<RV32I_TypeB>(v);};
-    auto as_j = [](u32 v){return std::bit_cast<RV32I_TypeJ>(v);};
     if (insn.family() == 0x3 && insn.opcode() == 0x00)
     {
         if (as_i(insn).funct3() == 0) { // lb
+            ;
         }
     }
     if (insn.family() == 0x3 && insn.opcode() == 0x04)
@@ -37,7 +91,7 @@ int RISCVContainer::PerformCycle()
         if (i.rd() == 0)
             return 0;
         if (i.funct3() == 0) // addi (add signed immediate)
-            xregs[i.rd()] = xregs[i.rs1()] + i.imm12();
+            xregs[i.rd()] = xregs[i.rs1()] + (signed)i.imm12();
         else if (r.funct3() == 1 && r.funct7() == 0) // slli
             xregs[r.rd()] = xregs[r.rs1()] << r.rs2(); // rs2 == shamt
         else if (r.funct3() == 1 && r.funct7() == 48 && r.rs2() == 0) // clz (Zbb-ext)
@@ -47,7 +101,7 @@ int RISCVContainer::PerformCycle()
         else if (i.funct3() == 2) // slti
             xregs[i.rd()] = (signed)xregs[i.rs1()] < (signed)i.imm12();
         else if (i.funct3() == 3) // sltiu
-            xregs[i.rd()] = (unsigned)xregs[i.rs1()] < (unsigned)i.imm12();
+            xregs[i.rd()] = (unsigned)xregs[i.rs1()] < i.imm12();
         else if (i.funct3() == 4) // xori
             xregs[i.rd()] = xregs[i.rs1()] ^ i.imm12();
         else if (i.funct3() == 5 && r.funct7() == 0) // srli
@@ -55,9 +109,9 @@ int RISCVContainer::PerformCycle()
         else if (i.funct3() == 5 && r.funct7() == 16) // srai
             xregs[r.rd()] = (signed)xregs[r.rs1()] >> r.rs2(); // rs2 == shamt
         else if (i.funct3() == 6) // ori
-            xregs[i.rd()] = xregs[i.rs1()] | (unsigned)i.imm12();
+            xregs[i.rd()] = xregs[i.rs1()] | i.imm12();
         else if (i.funct3() == 7) // andi
-            xregs[i.rd()] = xregs[i.rs1()] & (unsigned)i.imm12();
+            xregs[i.rd()] = xregs[i.rs1()] & i.imm12();
         else
             { RV32I_UnimplementedExit; }
         return 0;
@@ -117,27 +171,28 @@ int RISCVContainer::PerformCycle()
     if (insn.family() == 0x3 && insn.opcode() == 0x1B) // jal
     {
         pc += as_j(insn).offset();
-        printf("%s %i\t; pc is now %llu\n", "jal", as_j(insn).offset(), (instruction_block.data() - pc) / 4);
         return 0;
     }
     if (insn.family() == 0x3 && insn.opcode() == 0x18)
     {
         auto b = as_b(insn);
-        printf("branch x%i, x%i, %i\n", as_b(insn).rs1(), as_b(insn).rs2(), as_b(insn).offset());
-        if (b.funct3() == 2 || b.funct3() == 3) [[unlikely]]
+        if (b.funct3() == 2 || b.funct3() == 3)
             { RV32I_UnimplementedExit; }
-        if ((b.funct3() == 0 && xregs[b.rs1()] == xregs[b.rs2()])                    ||    // beq
-            (b.funct3() == 1 && xregs[b.rs1()] != xregs[b.rs2()])                    ||    // bne
-            (b.funct3() == 4 && (signed)xregs[b.rs1()] < (signed)xregs[b.rs2()])     ||    // blt
-            (b.funct3() == 5 && (signed)xregs[b.rs1()] >= (signed)xregs[b.rs2()])    ||    // bge
-            (b.funct3() == 6 && xregs[b.rs1()] < xregs[b.rs2()])                     ||    // bltu
-            (b.funct3() == 7 && xregs[b.rs1()] >= xregs[b.rs2()])                    )     // bgeu
+        if ((b.funct3() == 0 && xregs[b.rs1()] == xregs[b.rs2()])                       // beq
+            || (b.funct3() == 1 && xregs[b.rs1()] != xregs[b.rs2()])                    // bne
+            || (b.funct3() == 4 && (signed)xregs[b.rs1()] < (signed)xregs[b.rs2()])     // blt
+            || (b.funct3() == 5 && (signed)xregs[b.rs1()] >= (signed)xregs[b.rs2()])    // bge
+            || (b.funct3() == 6 && xregs[b.rs1()] < xregs[b.rs2()])                     // bltu
+            || (b.funct3() == 7 && xregs[b.rs1()] >= xregs[b.rs2()]))                   // bgeu
+        {
             pc += as_b(insn).offset();
+        }
         return 0;
     }
-    if (insn.family() == 0x3 && insn.opcode() == 0x19)
+    if (insn.family() == 0x3 && insn.opcode() == 0x19) // jalr
     {
-        printf("jalr x%i x%i %i", as_i(insn).rd(), as_i(insn).rs1(), as_i(insn).imm12());
+        auto i = as_i(insn);
+        xregs[i.rd()] = xregs[i.rs1()] + i.imm12();
         return 0;
     }
     printf("@%p Unknown instr: f=%i, op=%i, imm7=%i\n", (void*)pc, insn.family(), insn.opcode(), as_s(insn).imm7());
@@ -158,6 +213,7 @@ void RISCVContainer::Run()
         }
     }
 }
+*/
 
 /*
 const uint32_t rv32_bin[] = {
